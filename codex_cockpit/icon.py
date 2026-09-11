@@ -1,4 +1,4 @@
-"""Tray icon: a progress ring drawn on the fly."""
+"""Distinct terminal badge with a small usage bar for the GNOME panel."""
 from __future__ import annotations
 
 import math
@@ -43,27 +43,39 @@ def render(pct: float | None, state: str, seq: int) -> str:
     name = f"codex-cockpit-{seq % 1000}"
     surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, SIZE, SIZE)
     ctx = cairo.Context(surf)
-    cx = cy = SIZE / 2
-    r = SIZE / 2 - 7
-    lw = 8.0
-    ctx.set_line_width(lw)
-    ctx.set_line_cap(cairo.LINE_CAP_ROUND)
-
-    ctx.set_source_rgba(0.55, 0.58, 0.65, 0.30)
-    ctx.arc(cx, cy, r, 0, 2 * math.pi)
+    # A terminal silhouette remains distinct from cc-cockpit's circular gauge,
+    # even when GNOME scales the badge down to 16–22 pixels.
+    ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+    ctx.set_line_width(8)
+    ctx.rectangle(7, 7, 50, 50)
+    ctx.set_source_rgb(0.055, 0.12, 0.14)
+    ctx.fill_preserve()
+    ctx.set_source_rgb(0.08, 0.76, 0.60)
     ctx.stroke()
 
+    # High-contrast >_ mark, drawn as paths to avoid font dependencies.
+    ctx.set_source_rgb(0.96, 1.0, 0.99)
+    ctx.set_line_width(5)
+    ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+    ctx.move_to(17, 20)
+    ctx.line_to(28, 29)
+    ctx.line_to(17, 38)
+    ctx.stroke()
+    ctx.move_to(35, 38)
+    ctx.line_to(46, 38)
+    ctx.stroke()
+
+    ctx.set_line_width(4)
+    ctx.set_source_rgba(0.75, 0.85, 0.85, 0.35)
+    ctx.move_to(16, 49)
+    ctx.line_to(48, 49)
+    ctx.stroke()
     p = 0.0 if pct is None else max(0.0, min(100.0, pct)) / 100
     if p > 0:
-        cr, cg, cb = PALETTE[state]
-        ctx.set_source_rgb(cr, cg, cb)
-        ctx.arc(cx, cy, r, -math.pi / 2, -math.pi / 2 + 2 * math.pi * p)
+        ctx.set_source_rgb(*PALETTE[state])
+        ctx.move_to(16, 49)
+        ctx.line_to(16 + 32 * p, 49)
         ctx.stroke()
-
-    cr, cg, cb = PALETTE[state]
-    ctx.set_source_rgba(cr, cg, cb, 0.9)
-    ctx.arc(cx, cy, 7.5, 0, 2 * math.pi)
-    ctx.fill()
 
     # the loose file covers the old resolver; the hicolor/ copy covers GTK4,
     # which no longer looks for icons outside a theme structure

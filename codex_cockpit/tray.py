@@ -71,6 +71,7 @@ class Tray:
             AppIndicator.IndicatorCategory.SYSTEM_SERVICES,
         )
         self.ind.set_icon_theme_path(str(icon.ICON_DIR))
+        self.ind.set_icon_full(icon.render(None, "idle", self.seq), APP_ID)
         self.ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)
         self.menu = Gtk.Menu()
         self.ind.set_menu(self.menu)
@@ -136,6 +137,11 @@ class Tray:
     def _build_menu(self, s: dict) -> None:
         for child in self.menu.get_children():
             self.menu.remove(child)
+
+        heading = Gtk.MenuItem(label=APP_ID)
+        heading.get_child().set_markup(f"<b>{APP_ID}</b>")
+        self.menu.append(heading)
+        self._sep()
 
         if "error" in s:
             self._row(t("read_error"), icon.dot("crit"))
