@@ -21,8 +21,7 @@ bandeja e relatórios forneceu a base desta adaptação para o Codex.
 - **Wallace Martins da Silva** — autor do projeto original `cc-cockpit`.
 - **Claudio Pereira ([cpereiraweb](https://github.com/cpereiraweb))** — idealização,
   direção e manutenção da adaptação `codex-cockpit`.
-- **Codex (OpenAI)** — coautor de IA desta adaptação, responsável pela implementação
-  colaborativa da integração com o Codex, migração de namespaces, testes e documentação.
+- **Codex (OpenAI) com modelo GPT-6 Astra** — coautor de IA desta adaptação, responsável pela implementação colaborativa da integração com o Codex, migração de namespaces, testes e documentação.
 
 O histórico Git e a licença MIT original foram preservados, incluindo o crédito
 de copyright de Wallace Martins da Silva. A coautoria de IA reconhece a contribuição
