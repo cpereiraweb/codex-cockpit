@@ -11,12 +11,11 @@ jobs:
     strategy:
       matrix:
         python: ['3.10', '3.13']
-    env:
-      CODEX_HOME: ${{ runner.temp }}/empty-codex
-      XDG_CONFIG_HOME: ${{ runner.temp }}/cockpit-config
-      XDG_DATA_HOME: ${{ runner.temp }}/cockpit-data
     steps:
       - uses: actions/checkout@v4
+      - name: Isolate local application data
+        run: |
+          printf 'CODEX_HOME=%s/empty-codex\nXDG_CONFIG_HOME=%s/cockpit-config\nXDG_DATA_HOME=%s/cockpit-data\n' "$RUNNER_TEMP" "$RUNNER_TEMP" "$RUNNER_TEMP" >> "$GITHUB_ENV"
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
