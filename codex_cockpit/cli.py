@@ -1,4 +1,4 @@
-"""cc-cockpit command line."""
+"""codex-cockpit command line."""
 from __future__ import annotations
 
 import argparse
@@ -25,8 +25,10 @@ def _bar(pct: float | None, width: int = 24) -> str:
 
 def report(cfg: dict) -> None:
     s = summary(cfg=cfg)
+    if s["unpriced_models"]:
+        print(t("unpriced", models=", ".join(s["unpriced_models"])))
     b, w, tot = s["block"], s["week"], s["totals"]
-    print(f"\n\033[1mcc-cockpit\033[0m  ·  {t('sessions_open', n=len(s['sessions']))}\n")
+    print(f"\n\033[1mcodex-cockpit\033[0m  ·  {t('sessions_open', n=len(s['sessions']))}\n")
 
     rows = (
         (t("block_of", h=f"{s['block_hours']:.0f}"), b,
@@ -137,7 +139,7 @@ def _sync_state(s: dict) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="cc-cockpit", description="Claude Code usage panel")
+    parser = argparse.ArgumentParser(prog="codex-cockpit", description="Codex usage panel")
     parser.add_argument("--lang", choices=i18n.SUPPORTED, help="override the interface language")
     sub = parser.add_subparsers(dest="cmd")
     sub.add_parser("tray", help="tray indicator for GNOME (default)")
@@ -148,13 +150,8 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("json", help="dump the summary as JSON")
     sub.add_parser("collect", help="ingest new transcripts and exit")
     sub.add_parser("config", help="show the config path and contents")
-    line = sub.add_parser("statusline",
-                          help="capture Claude Code's statusline payload (official numbers)")
-    line.add_argument("--chain", help="run another statusline command and print its output")
-    line.add_argument("--install", action="store_true",
-                      help="register it in ~/.claude/settings.json (keeps a backup)")
     sync = sub.add_parser(
-        "sync", help="feed it what Claude Code's usage panel shows (percent and reset)")
+        "sync", help="feed it what Codex's usage panel shows (percent and reset)")
     sync.add_argument("--block", metavar="PCT", help="percent used in the current session window")
     sync.add_argument("--block-reset", metavar="TIME", help="e.g. '1h55' or '1 h 55 min'")
     sync.add_argument("--week", metavar="PCT", help="percent used in the weekly window")
@@ -181,12 +178,6 @@ def main(argv: list[str] | None = None) -> int:
     elif cmd == "collect":
         events, new = refresh()
         print(t("cli_new_events", new=new, total=len(events)))
-    elif cmd == "statusline":
-        from . import statusline as sl
-        if args.install:
-            print(f"{sl.SETTINGS}: {sl.install()}")
-            return 0
-        return sl.main(args.chain)
     elif cmd == "sync":
         return _sync(args, cfg)
     elif cmd == "config":

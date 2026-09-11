@@ -6,7 +6,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from . import anchors, calibration, config, i18n, panel
+from . import anchors, calibration, config, i18n, panel, pricing
 from .collector import Event, refresh
 from .sessions import live_sessions
 
@@ -14,11 +14,11 @@ HOUR = 3600.0
 
 
 class Bucket:
-    __slots__ = ("usd", "inp", "out", "w5", "w1", "read", "requests", "first", "last", "models", "sessions")
+    __slots__ = ("usd", "inp", "out", "cw", "read", "requests", "first", "last", "models", "sessions")
 
     def __init__(self) -> None:
         self.usd = 0.0
-        self.inp = self.out = self.w5 = self.w1 = self.read = self.requests = 0
+        self.inp = self.out = self.cw = self.read = self.requests = 0
         self.first = self.last = 0.0
         self.models: dict[str, float] = defaultdict(float)
         self.sessions: set[str] = set()
@@ -27,8 +27,7 @@ class Bucket:
         self.usd += e.c
         self.inp += e.i
         self.out += e.o
-        self.w5 += e.w5
-        self.w1 += e.w1
+        self.cw += e.cw
         self.read += e.r
         self.requests += 1
         self.models[e.m] += e.c
@@ -40,22 +39,21 @@ class Bucket:
 
     @property
     def tokens(self) -> int:
-        return self.inp + self.out + self.w5 + self.w1 + self.read
+        return self.inp + self.out + self.cw + self.read
 
     @property
     def billable(self) -> int:
         """Tokens that did not come from a cache hit - the ones that weigh."""
-        return self.inp + self.out + self.w5 + self.w1
+        return self.inp + self.out + self.cw
 
     def as_dict(self) -> dict:
-        total_in = self.inp + self.w5 + self.w1 + self.read
+        total_in = self.inp + self.cw + self.read
         return {
             "usd": round(self.usd, 4),
             "tokens": self.tokens,
             "input": self.inp,
             "output": self.out,
-            "cache_write_5m": self.w5,
-            "cache_write_1h": self.w1,
+            "cache_write": self.cw,
             "cache_read": self.read,
             "requests": self.requests,
             "sessions": len(self.sessions - {""}),
@@ -77,8 +75,7 @@ def build_blocks(events: list[Event], block_hours: float) -> list[dict]:
     its first request and lasts block_hours; a silence longer than the window
     opens the next one.
 
-    The start is NOT rounded down to the hour. Checked against what Claude Code
-    itself reports: a first request at 08:46:33 resets at 13:46, not 13:00.
+    These are local estimates, not account rate-limit windows.
     """
     span = block_hours * HOUR
     blocks: list[dict] = []
@@ -191,8 +188,8 @@ def summary(events: list[Event] | None = None, cfg: dict | None = None) -> dict:
     closed = [b for b in blocks if b is not active]
 
     # The account-wide window may have opened before the first local request
-    # (the Claude app shares the same limit), so a known end wins over the
-    # local estimate: official statusline data first, manual anchor second.
+    # (other clients may consume the same quota), so a known end wins over the
+    # local estimate: official rollout data first, manual anchor second.
     official_block = panel.window("block", now)
     end_override = official_block["resets_at"] if official_block else anchors.block_end(now)
     block_source = "official" if official_block else ("anchored" if end_override else "local")
@@ -205,7 +202,7 @@ def summary(events: list[Event] | None = None, cfg: dict | None = None) -> dict:
         active = {"start": start, "end": end_override, "bucket": bucket}
 
     # ceilings, in order of trust: manual config > calibration against the
-    # percentage Claude Code reports > the largest value ever observed
+    # percentage Codex reports > the largest value ever observed
     lim_block, src_block = cfg["limits"].get("block_usd"), "manual"
     if not lim_block:
         lim_block, src_block = calibration.ceiling("block"), "calibrated"
@@ -302,6 +299,7 @@ def summary(events: list[Event] | None = None, cfg: dict | None = None) -> dict:
 
     return {
         "generated_at": now,
+        "unpriced_models": sorted({e.m or "unknown" for e in events if pricing.resolve(e.m) is None}),
         "block_hours": block_hours,
         "totals": {k: v.as_dict() for k, v in totals.items()},
         "today_gauge": {**totals["today"].as_dict(), **_gauge(totals["today"].usd, lim_day)},

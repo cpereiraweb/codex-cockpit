@@ -1,167 +1,172 @@
-# cc-cockpit
+# codex-cockpit
 
-[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[Repositório oficial: cpereiraweb/codex-cockpit](https://github.com/cpereiraweb/codex-cockpit)
 
-A Claude Code usage panel for GNOME: a tray indicator with a consumption ring,
-a local dashboard and a terminal summary.
+Monitor local de uso do **OpenAI Codex** para Linux: indicador na bandeja GNOME,
+dashboard e relatório no terminal. Interface em português, inglês e espanhol.
 
-Everything is read from what Claude Code already writes under `~/.claude`. It
-makes no network calls, reads no credentials and sends nothing anywhere.
+Lê os rollouts em `$CODEX_HOME/sessions/**/*.jsonl` e
+`$CODEX_HOME/archived_sessions/**/*.jsonl` (`CODEX_HOME` padrão: `~/.codex`).
+Não lê credenciais, não chama APIs e não altera a configuração do Codex.
+O servidor do dashboard escuta somente em `127.0.0.1`.
 
-The interface follows your OS language — English, Portuguese and Spanish are
-bundled — and can be pinned in the config file or with `--lang`.
+## Origem, créditos e coautoria
 
-## What it shows
+Este projeto se inspirou diretamente no excelente trabalho de **Wallace Martins**
+([wallacemartinss](https://github.com/wallacemartinss)), autor do
+[cc-cockpit](https://github.com/wallacemartinss/cc-cockpit), e foi desenvolvido a
+partir de seu código. A arquitetura original de monitoramento local, dashboard,
+bandeja e relatórios forneceu a base desta adaptação para o Codex.
 
-| | |
-|---|---|
-| **5h block** | how much the current rate-limit window has consumed, time to reset, hourly pace, projection to the end of the block, and how long until the reference ceiling. The window starts at the exact timestamp of its first request — not rounded to the hour — which is what makes the reset match what the CLI reports |
-| **7 days / today / month** | rolling totals, as a percentage of your own historical peak |
-| **Open sessions** | every live CLI instance: name, project, `busy`/`idle`, uptime, RAM, pid, and what that session has consumed |
-| **Projects** | ranked by consumption across the whole history |
-| **Blocks, days and hours** | time series showing when you actually spend |
-| **Token mix** | input / output / cache write 5m / cache write 1h / cache read, with the cache hit rate |
-| **Models, effort and subagents** | where the consumption really goes |
+- **Wallace Martins da Silva** — autor do projeto original `cc-cockpit`.
+- **Claudio Pereira ([cpereiraweb](https://github.com/cpereiraweb))** — idealização,
+  direção e manutenção da adaptação `codex-cockpit`.
+- **Codex (OpenAI)** — coautor de IA desta adaptação, responsável pela implementação
+  colaborativa da integração com o Codex, migração de namespaces, testes e documentação.
 
-Usage is measured in **API-equivalent USD**: what those messages would cost on
-the pay-as-you-go API. On a Pro/Max plan none of it is billed — the number works
-as a weight unit for consumption and shows how much the plan returns.
+O histórico Git e a licença MIT original foram preservados, incluindo o crédito
+de copyright de Wallace Martins da Silva. A coautoria de IA reconhece a contribuição
+na adaptação e não implica afiliação ou endosso da OpenAI.
 
-## Install
+## Instalação e uso
+
+Requer Python 3.10+ e Linux. Para a bandeja, instale também as dependências GTK:
 
 ```bash
-sudo apt install gir1.2-ayatanaappindicator3-0.1   # tray only
+git clone https://github.com/cpereiraweb/codex-cockpit.git
+cd codex-cockpit
+sudo apt install python3-gi python3-cairo gir1.2-ayatanaappindicator3-0.1
 ./install.sh
-cc-cockpit          # tray + dashboard in the background
+codex-cockpit
 ```
 
-`install.sh` creates `~/.local/bin/cc-cockpit` and registers the GNOME autostart
-entry.
+O instalador cria `~/.local/bin/codex-cockpit` e
+`~/.config/autostart/codex-cockpit.desktop`. Mantenha este repositório no mesmo
+local: o executável aponta para ele. O dashboard e os relatórios não dependem de GTK.
 
 ```bash
-cc-cockpit report          # terminal summary
-cc-cockpit serve --open    # dashboard only (http://127.0.0.1:8765)
-cc-cockpit json            # everything as JSON, for scripting
-cc-cockpit collect         # ingest new transcripts and exit
-cc-cockpit config          # config path and contents
-cc-cockpit statusline --install   # capture the official numbers (see below)
-cc-cockpit --lang es report
+codex-cockpit report
+codex-cockpit serve --open          # http://127.0.0.1:8766
+codex-cockpit json
+codex-cockpit collect
+codex-cockpit config
+codex-cockpit --lang pt report
 ```
 
-## Configuration
+Sem instalar:
 
-`~/.config/cc-cockpit/config.json`:
-
-```jsonc
-{
-  "language": "auto",            // auto (follows the OS) | en | pt | es
-  "block_hours": 5,
-  "limits": { "block_usd": null, "week_usd": null },  // null = auto-calibrate
-  "tray_metric": "block",        // block | week | today | none
-  "menu_bar_style": "blocks",    // blocks | dots | emoji (emoji is the colourful one)
-  "tray_show_cost": true,
-  "refresh_seconds": 20,
-  "plan_monthly_usd": null,      // e.g. 200 -> shows how many times the plan paid for itself
-  "plan_name": "",
-  "local_currency": null,        // e.g. {"code":"BRL","symbol":"R$","rate":5.4}
-  "dashboard_port": 8765,
-  "warn_pct": 70,
-  "critical_pct": 90
-}
+```bash
+python3 -m codex_cockpit report
+python3 -m codex_cockpit serve --open
 ```
 
-## The real numbers, from the statusline
+## O que mostra
 
-Two things cannot be derived from local transcripts:
+- Tokens de entrada, saída, escrita e leitura de cache, por projeto e modelo.
+- Histórico por hora, dia, mês e blocos locais configuráveis.
+- Esforço de raciocínio e consumo de subagentes identificados nos metadados.
+- Percentuais e resets de limites de 5 horas e 7 dias, quando presentes nos
+  eventos `token_count`. As janelas são identificadas pela duração, não pela
+  posição `primary`/`secondary`.
+- Processos nativos do Codex em execução, PID, memória, diretório e tempo aberto.
+  A associação a uma sessão exige um rollout aberto pelo processo; sem essa
+  evidência, o consumo por processo não é atribuído. A atividade aparece como
+  indisponível, pois a existência do processo não comprova estado busy/idle.
+- Contexto estimado a partir do último uso informado, disponível no JSON e na bandeja.
 
-1. **The limit belongs to the account, not to the CLI.** Whatever you consume in
-   the Claude app counts against the same window and leaves nothing on disk, so
-   a window can start before your first local request.
-2. **The weekly limit is a fixed window** with its own reset time, not the
-   rolling 7 days a local reader would assume.
+A coleta é incremental, mantém metadados entre execuções, ignora linhas ainda
+incompletas e usa deltas dos contadores cumulativos. Tokens de raciocínio já
+estão incluídos na saída e não são somados novamente. O cache é separado da
+entrada para evitar dupla contagem. Arquivar ou reler um rollout não duplica os
+eventos já coletados. Um lock serializa coletas simultâneas.
 
-Claude Code pipes a JSON payload into the statusline command on every render,
-and it carries exactly what the plan panel shows:
+## Limites e estimativas
+
+A prioridade é: observação oficial nos rollouts → sincronização manual →
+estimativa local. Observações oficiais preservam seu horário original e expiram
+no reset; a coleta de um arquivo antigo não o torna uma observação recente.
+Limites de outras durações ou específicos de outros produtos não são atribuídos
+às janelas de 5h/7d. Não há consulta em tempo real à conta.
+
+Sem dados oficiais, os percentuais usam tetos configurados, calibração ou seu
+próprio pico histórico: **não são o limite real da assinatura**. Para sincronizar
+manualmente os percentuais **usados** (se o Codex mostrar restante, subtraia de 100):
+
+```bash
+codex-cockpit sync --block 23% --block-reset 1h55 --week 3% --week-reset 2d
+codex-cockpit sync
+codex-cockpit sync --reset
+```
+
+Não existe instalação de um hook de statusline nesta versão. O mecanismo de
+comando externo usado pelo projeto original não corresponde ao
+[`tui.status_line` do Codex](https://learn.chatgpt.com/docs/config-file/config-reference),
+que configura uma lista de itens do rodapé.
+
+Valores em USD são **estimativas equivalentes à API**, não a fatura nem a quota
+contratual do plano. A tabela inclui preços padrão verificados em 10/09/2026 para
+[GPT-5.3-Codex](https://developers.openai.com/api/docs/models/gpt-5.3-codex),
+[GPT-5.4](https://developers.openai.com/api/docs/models/gpt-5.4),
+[GPT-5.5](https://developers.openai.com/api/docs/models/gpt-5.5),
+[GPT-6 Astra](https://developers.openai.com/api/docs/models/gpt-6-astra) e
+[GPT-5.6 Sol](https://developers.openai.com/api/docs/models/gpt-5.6-sol).
+Não inclui taxas de ferramentas, descontos ou multiplicadores de service tier.
+Os ajustes de contexto longo são aplicados aos modelos conhecidos quando o delta
+de uso representa uma requisição. Lacunas nos registros podem agrupar requisições;
+por isso contagens e valores continuam sendo aproximações locais.
+
+Modelos sem preço conhecido continuam contando tokens e aparecem em
+`unpriced_models`; CLI e dashboard sinalizam que os totais monetários são parciais.
+Adicione seus preços para que o histórico retido seja recalculado na próxima coleta.
+
+## Configuração e isolamento
+
+`~/.config/codex-cockpit/config.json` (respeita `XDG_CONFIG_HOME`):
 
 ```json
-"rate_limits": {
-  "five_hour": {"used_percentage": 23, "resets_at": 1788800000},
-  "seven_day": {"used_percentage": 3,  "resets_at": 1788790000}
+{
+  "language": "auto",
+  "block_hours": 5,
+  "limits": {"block_usd": null, "week_usd": null},
+  "tray_metric": "block",
+  "menu_bar_style": "blocks",
+  "tray_show_cost": true,
+  "refresh_seconds": 20,
+  "plan_monthly_usd": null,
+  "plan_name": "",
+  "local_currency": null,
+  "dashboard_port": 8766,
+  "warn_pct": 70,
+  "critical_pct": 90,
+  "model_prices": {
+    "gpt-5.3-codex": {"input": 1.75, "output": 14, "cached_input": 0.175}
+  }
 }
 ```
 
-Register the capture once — no credentials, no undocumented endpoint:
+Os preços são em USD por milhão de tokens. `local_currency` pode conter
+`{"code":"BRL","symbol":"R$","rate":5.4}`; a cotação é manual.
+
+| Recurso | Identificador |
+|---|---|
+| Executável / AppIndicator | `codex-cockpit` |
+| Módulo Python | `codex_cockpit` |
+| Configuração | `$XDG_CONFIG_HOME/codex-cockpit` |
+| Histórico, estado, lock e ícones | `$XDG_DATA_HOME/codex-cockpit` |
+| Autostart | `codex-cockpit.desktop` |
+| Porta padrão | `8766` |
+
+`XDG_DATA_HOME` usa `~/.local/share` por padrão. Nenhum arquivo do `cc-cockpit`
+é importado, modificado ou removido; os dois podem coexistir, inclusive seus dashboards.
+Os rollouts são um formato local sujeito a mudanças entre versões do Codex.
+Sessões remotas sem registros locais não entram nos totais de tokens.
+
+## Desenvolvimento
 
 ```bash
-cc-cockpit statusline --install
+python3 -m unittest discover -s tests -v
+python3 -m compileall -q codex_cockpit
+bash -n install.sh
 ```
 
-It writes `statusLine` into `~/.claude/settings.json`, keeping a `.bak`. If you
-already had one, it is chained rather than replaced, so its output still shows
-in the CLI. The captured payload also carries the **context window percentage
-per session**, which the dashboard shows next to each open session.
-
-From then on the official percentage is the source of truth, and it reveals the
-real ceiling — `local consumption ÷ official percentage` — so the currency
-figures stay meaningful too.
-
-### When there is no statusline data yet
-
-Numbers fall back, in order of trust: **official** (statusline) → **anchored**
-(what you typed) → **local estimate**. The middle one exists because a fresh
-install has no capture yet:
-
-```bash
-cc-cockpit sync --block 23% --block-reset 1h55 --week 3% --week-reset 1h15
-cc-cockpit sync            # show anchors, samples and implied ceilings
-cc-cockpit sync --reset
-```
-
-Both the tray and the dashboard say which source is in use.
-
-## How it works
-
-```
-~/.claude/projects/**/*.jsonl   transcripts (usage per request)
-~/.claude/sessions/*.json       one entry per live CLI       ─┐
-statusline payload (stdin)      official rate limits + context ├─> cockpit/
-      ~/.local/share/cc-cockpit/events.ndjson  <───────────────┘
-      ~/.local/share/cc-cockpit/panel.json     official snapshot
-```
-
-- `collector.py` reads each transcript **from the last offset**, so a refresh
-  costs ~30 ms even with 190 MB of history.
-- Events land in a dedicated NDJSON file. That matters: Claude Code **prunes
-  transcripts after ~30 days**, and from the first collection onward cc-cockpit
-  keeps the full history.
-- Deduplication by `message.id:requestId`, so resuming a session is not counted
-  twice.
-- `sessions.py` validates each pid against `/proc` **and** compares the
-  `starttime`, so a recycled pid is never mistaken for a live session.
-- Prices live in `pricing.py`: cache writes at 1.25× (5m) and 2× (1h) of input,
-  cache reads at 0.1× (0.025× on Fable 5.1). The transcript separates the two
-  cache-write TTLs and the calculation uses that split instead of assuming 5m.
-- `i18n.py` holds one catalogue for all three surfaces, plus locale-aware number
-  and currency formatting.
-- `panel.py` keeps the official snapshot and appends a line to
-  `panel-history.ndjson` whenever the percentage changes.
-
-## Honest limitations
-
-- Without the statusline capture and without `limits`, the percentage is
-  relative to your own history, not to the real plan limit.
-- The statusline only refreshes while a CLI session is rendering. That is
-  enough — what is not running cannot be consuming — but right after a long
-  gap the percentage may lag until the next render.
-- Consumption from the Claude app shows up in the official percentage, never in
-  the local currency figures, which read Claude Code transcripts only.
-- Models released after this version fall back to their family price (`opus`,
-  `sonnet`, `haiku`, `fable`) until they are added to `pricing.py`.
-- `<synthetic>` rows are responses the CLI generates locally: they show up in
-  the request count and cost nothing.
-
-## License
-
-MIT — see [LICENSE](LICENSE).
-
-Not affiliated with Anthropic.
+MIT — veja [LICENSE](LICENSE). Projeto independente, sem afiliação à OpenAI.

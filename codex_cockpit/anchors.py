@@ -1,17 +1,4 @@
-"""Window anchors taken from Claude Code's own usage panel.
-
-Two things cannot be derived from local transcripts:
-
-  1. The limit belongs to the account, not to the CLI. Anything consumed in the
-     Claude app counts against the same window and leaves nothing on disk, so a
-     window can start before the first local request.
-  2. The weekly limit is a fixed window with its own reset time, not the rolling
-     7 days a local reader would assume.
-
-So the panel's "resets in ..." is recorded here and used as the source of truth
-while it lasts. A block anchor simply expires; a weekly anchor rolls forward in
-7-day steps, since the reset time repeats.
-"""
+"""Manual reference calibration for Codex usage windows."""
 from __future__ import annotations
 
 import json

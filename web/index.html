@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>cc-cockpit</title>
+<title>codex-cockpit</title>
 <style>
   :root{
     --bg:#0e1014; --panel:#161a21; --panel2:#1c212a; --line:#252b36;
-    --fg:#e6e9ef; --muted:#8b94a6; --accent:#d97757; --ok:#4ea87a;
+    --fg:#e6e9ef; --muted:#8b94a6; --accent:#10a37f; --ok:#4ea87a;
     --warn:#d9a441; --crit:#d95757; --blue:#5b8dd9;
     --radius:14px;
   }
@@ -66,12 +66,13 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>cc<span>·</span>cockpit</h1>
+    <h1>codex<span>·</span>cockpit</h1>
     <span class="pill" id="plan">—</span>
     <span class="pill" id="live">—</span>
     <span class="sub" id="upd" style="margin-left:auto"></span>
   </header>
 
+  <p class="sub" id="pricing-note"></p>
   <div class="grid g3" id="gauges"></div>
 
   <div class="grid g4" style="margin-top:14px" id="kpis"></div>
@@ -175,9 +176,8 @@ function bars(items, {value, label, height=110, fmt=money, hi=null}){
 }
 function stacked(b){
   const parts = [
+    ['cache write', b.cache_write, 'var(--accent)'],
     ['cache read', b.cache_read, 'var(--blue)'],
-    ['cache write 1h', b.cache_write_1h, 'var(--accent)'],
-    ['cache write 5m', b.cache_write_5m, '#8a6bd9'],
     ['output', b.output, 'var(--ok)'],
     ['input', b.input, 'var(--warn)'],
   ].filter(p=>p[1]>0);
@@ -196,6 +196,7 @@ async function tick(){
   document.documentElement.lang = s.i18n.language;
   document.querySelectorAll('[data-t]').forEach(el => el.textContent = t(el.dataset.t));
   $('#h-blocks').textContent = t('card_blocks', {h: s.block_hours.toFixed(0)});
+  $('#pricing-note').textContent = s.unpriced_models.length ? t('unpriced', {models:s.unpriced_models.join(', ')}) : '';
   const th = {warn:s.thresholds.warn, critical:s.thresholds.critical};
   const b = s.block, w = s.week, tt = s.totals;
 
@@ -209,7 +210,7 @@ async function tick(){
   $('#gauges').innerHTML = [
     [t('block_of',{h:s.block_hours.toFixed(0)}), b,
       b.active ? t('resets_in',{d:dur(b.remaining_s)}) : t('no_activity')],
-    [w.window_source==='anchored' ? t('week_window') : t('days7'), w,
+    [['official','anchored'].includes(w.window_source) ? t('week_window') : t('days7'), w,
       w.remaining_s ? t('resets_in',{d:dur(w.remaining_s)})
                     : `${nf().format(w.requests)} ${t('requests')}`],
     [t('today'), s.today_gauge,
@@ -219,6 +220,7 @@ async function tick(){
       ${ring(d.pct, color(d.pct, th))}
       <div><div class="num">${money(d.usd)}<span class="muted" style="font-size:13px;font-weight:400">${local(d.usd)}</span></div>
         <div class="cap">${toks(d.tokens)} tokens · ${esc(cap)}</div>
+        ${d.window_source?`<div class="cap">${esc(t('src_'+d.window_source))}</div>`:''}
         ${d.limit?`<div class="cap">${esc(t('reference_ceiling',{v:money(d.limit)}))}${
           d.limit_source?' · '+esc(t('src_'+d.limit_source)):''}</div>`:''}
       </div></div></div>`).join('');
@@ -242,7 +244,7 @@ async function tick(){
     <div class="sess ${x.status}">
       <div style="min-width:0">
         <div class="nm"><span class="dot" style="background:${x.status==='busy'?'var(--ok)':'var(--muted)'}"></span>${esc(x.name)}
-          <span class="tag">${x.status}</span></div>
+          <span class="tag">${esc(x.status==='unknown'?t('status_unknown'):x.status)}</span></div>
         <div class="pth">${esc(x.cwd)}</div>
       </div>
       <div class="right"><div class="mono">${money(x.usage.usd)}</div>
@@ -284,7 +286,7 @@ async function safeTick(){
   try { await tick(); }
   catch (err) {
     // a silent throw used to leave the cards below it blank with no clue why
-    console.error('[cc-cockpit]', err);
+    console.error('[codex-cockpit]', err);
     $('#foot').textContent = 'render error: ' + err.message;
   }
 }

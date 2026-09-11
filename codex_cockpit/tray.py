@@ -38,7 +38,7 @@ from .i18n import tokens as _toks  # noqa: E402
 from .i18n import use as use_language  # noqa: E402
 from .stats import summary  # noqa: E402
 
-APP_ID = "cc-cockpit"
+APP_ID = "codex-cockpit"
 
 
 # Solid blocks keep a single advance width in the panel font; the parallelogram
@@ -75,9 +75,9 @@ class Tray:
         self.menu = Gtk.Menu()
         self.ind.set_menu(self.menu)
         self.ind.set_title(APP_ID)
-        self.ind.set_label("cc", APP_ID)
+        self.ind.set_label("codex", APP_ID)
 
-        port = int(self.cfg.get("dashboard_port") or 8765)
+        port = int(self.cfg.get("dashboard_port") or 8766)
         threading.Thread(target=server.serve, args=(port,), daemon=True).start()
         self.url = f"http://127.0.0.1:{port}/"
 
@@ -102,7 +102,7 @@ class Tray:
     def _apply(self, data: dict) -> bool:
         self.data = data
         if "error" in data:
-            self.ind.set_label("cc ⚠", APP_ID)
+            self.ind.set_label("codex ⚠", APP_ID)
         else:
             self._paint(data)
         self._build_menu(data)
@@ -126,7 +126,7 @@ class Tray:
                 bits.append(f"{pct:.0f}%")
             if self.cfg.get("tray_show_cost", True):
                 bits.append(_money(src["usd"]))
-            self.ind.set_label(" · ".join(bits) or "—", "cc-cockpit 000%")
+            self.ind.set_label(" · ".join(bits) or "—", "codex-cockpit 000%")
         th = s["thresholds"]
         state = icon.state_for(pct, th["warn"], th["critical"])
         self.seq += 1
@@ -179,7 +179,7 @@ class Tray:
                   icon.dot("idle", 22))
         self._sep()
 
-        # --- live sessions, now with the context window from the statusline ---
+        # --- live sessions, now with the context window from the rollouts ---
         if not s["sessions"]:
             self._row(t("no_sessions"), icon.dot("idle", 22))
         for x in s["sessions"]:
@@ -188,14 +188,14 @@ class Tray:
             bits = [x["name"], _money(x["usage"]["usd"])]
             if ctx is not None:
                 bits.append(f"ctx {ctx:.0f}%")
-            elif not busy:
+            elif x["status"] == "idle":
                 bits.append(t("idle_for", d=_dur(x["idle_s"])))
             item = Gtk.ImageMenuItem.new_with_label("   ".join(bits))
             item.set_image(Gtk.Image.new_from_file(
                 icon.dot("ok" if busy else "idle", 22, 100 if busy else None)))
             item.set_always_show_image(True)
             inner = Gtk.Menu()
-            state_line = t("working") if busy else t("idle_for", d=_dur(x["idle_s"]))
+            state_line = t("working") if busy else t("status_unknown")
             lines = [
                 x["cwd"],
                 f"{state_line} · {t('open_for', d=_dur(x['uptime_s']))}",

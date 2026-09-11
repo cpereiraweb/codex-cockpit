@@ -1,17 +1,18 @@
-"""cc-cockpit configuration (~/.config/cc-cockpit/config.json)."""
+"""codex-cockpit configuration (~/.config/codex-cockpit/config.json)."""
 from __future__ import annotations
 
 import json
 import os
 from pathlib import Path
 
-CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "cc-cockpit"
+CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "codex-cockpit"
 CONFIG_FILE = CONFIG_DIR / "config.json"
 
 DEFAULTS: dict = {
     # interface language: auto (follows the OS) | en | pt | es
     "language": "auto",
-    # Claude Code rate-limit window
+    "model_prices": {},  # exact model ID -> input/output/cached_input USD per million
+    # Codex rate-limit window
     "block_hours": 5,
     # reference ceilings in API-equivalent USD. null = auto-calibrate from the
     # largest block/week ever seen in your own history.
@@ -27,7 +28,7 @@ DEFAULTS: dict = {
     "plan_name": "",
     # optional rate to show a local-currency figure next to USD
     "local_currency": None,   # e.g. {"code": "BRL", "symbol": "R$", "rate": 5.4}
-    "dashboard_port": 8765,
+    "dashboard_port": 8766,
     "warn_pct": 70,
     "critical_pct": 90,
 }

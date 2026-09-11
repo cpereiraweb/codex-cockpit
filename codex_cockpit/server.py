@@ -24,7 +24,7 @@ def cached_summary(max_age: float = 5.0) -> dict:
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "cc-cockpit"
+    server_version = "codex-cockpit"
 
     def log_message(self, *args) -> None:  # silence the per-request log
         pass
@@ -52,10 +52,10 @@ class Handler(BaseHTTPRequestHandler):
 
 def serve(port: int | None = None, open_browser: bool = False) -> None:
     cfg = config.ensure()
-    port = port or int(cfg.get("dashboard_port") or 8765)
+    port = port or int(cfg.get("dashboard_port") or 8766)
     httpd = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     url = f"http://127.0.0.1:{port}/"
-    print(f"cc-cockpit at {url}  (ctrl-c to stop)")
+    print(f"codex-cockpit at {url}  (ctrl-c to stop)")
     if open_browser:
         import webbrowser
         threading.Timer(0.5, lambda: webbrowser.open(url)).start()

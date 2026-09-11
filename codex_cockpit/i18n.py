@@ -16,6 +16,8 @@ _TAGS = {"en": "en-US", "pt": "pt-BR", "es": "es-ES"}
 
 CATALOG: dict[str, dict[str, str]] = {
     "en": {
+        "unpriced": "Partial USD totals: no price for {models}",
+        "status_unknown": "activity unavailable",
         # tray + cli
         "block_of": "Block of {h}h",
         "no_activity": "no activity in the current window",
@@ -90,6 +92,8 @@ CATALOG: dict[str, dict[str, str]] = {
         "src_peak": "your historical peak",
     },
     "pt": {
+        "unpriced": "Totais em USD parciais: sem preço para {models}",
+        "status_unknown": "atividade indisponível",
         "block_of": "Bloco de {h}h",
         "no_activity": "sem atividade na janela atual",
         "resets_in": "reseta em {d}",
@@ -161,6 +165,8 @@ CATALOG: dict[str, dict[str, str]] = {
         "src_peak": "seu pico histórico",
     },
     "es": {
+        "unpriced": "Totales USD parciales: sin precio para {models}",
+        "status_unknown": "actividad no disponible",
         "block_of": "Bloque de {h}h",
         "no_activity": "sin actividad en la ventana actual",
         "resets_in": "se reinicia en {d}",

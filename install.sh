@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Installs cc-cockpit for the current user (nothing under /usr).
+# Installs codex-cockpit for the current user (nothing under /usr).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN="$HOME/.local/bin"
-AUTOSTART="$HOME/.config/autostart"
+AUTOSTART="${XDG_CONFIG_HOME:-$HOME/.config}/autostart"
 
-echo "==> cc-cockpit em $ROOT"
+echo "==> codex-cockpit em $ROOT"
 
 missing=()
 python3 -c "import gi" 2>/dev/null || missing+=(python3-gi)
@@ -26,30 +26,30 @@ if [ ${#missing[@]} -gt 0 ]; then
 fi
 
 mkdir -p "$BIN"
-cat > "$BIN/cc-cockpit" <<EOF
+cat > "$BIN/codex-cockpit" <<EOF
 #!/usr/bin/env bash
-cd "$ROOT" && exec python3 -m cockpit "\$@"
+cd "$ROOT" && exec python3 -m codex_cockpit "\$@"
 EOF
-chmod +x "$BIN/cc-cockpit"
-echo "==> $BIN/cc-cockpit"
+chmod +x "$BIN/codex-cockpit"
+echo "==> $BIN/codex-cockpit"
 
 mkdir -p "$AUTOSTART"
-cat > "$AUTOSTART/cc-cockpit.desktop" <<EOF
+cat > "$AUTOSTART/codex-cockpit.desktop" <<EOF
 [Desktop Entry]
 Type=Application
-Name=cc-cockpit
-Comment=Claude Code usage in the tray
-Exec=$BIN/cc-cockpit tray
+Name=codex-cockpit
+Comment=Codex usage in the tray
+Exec="$BIN/codex-cockpit" tray
 Icon=utilities-system-monitor
 Terminal=false
 Categories=System;Monitor;
 X-GNOME-Autostart-enabled=true
 X-GNOME-Autostart-Delay=8
 EOF
-echo "==> autostart em $AUTOSTART/cc-cockpit.desktop"
+echo "==> autostart em $AUTOSTART/codex-cockpit.desktop"
 
 echo "==> first collection"
-(cd "$ROOT" && python3 -m cockpit collect)
+(cd "$ROOT" && python3 -m codex_cockpit collect)
 
 case ":$PATH:" in
   *":$BIN:"*) ;;
@@ -58,6 +58,6 @@ esac
 
 echo
 echo "ready:"
-echo "  cc-cockpit          tray (also starts the dashboard)"
-echo "  cc-cockpit serve --open   dashboard only"
-echo "  cc-cockpit report   terminal summary"
+echo "  codex-cockpit          tray (also starts the dashboard)"
+echo "  codex-cockpit serve --open   dashboard only"
+echo "  codex-cockpit report   terminal summary"

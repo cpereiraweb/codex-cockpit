@@ -1,13 +1,4 @@
-"""Calibrating the reference ceiling against the percentage Claude Code reports.
-
-Anthropic does not publish the plan limit, and the weighting behind its
-percentage is not documented. But the CLI does show a percentage, so one sample
-of (consumption now, percentage now) implies a ceiling. Several samples, and the
-median of them, absorb the noise of typing the number a moment later.
-
-The implied ceiling is only as stable as the weighting: it holds while the model
-mix stays roughly the same, which is the usual case for one person's workflow.
-"""
+"""Manual reference calibration for Codex usage windows."""
 from __future__ import annotations
 
 import json

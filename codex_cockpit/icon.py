@@ -37,10 +37,10 @@ def render(pct: float | None, state: str, seq: int) -> str:
     """
     themed = ICON_DIR / "hicolor" / f"{SIZE}x{SIZE}" / "apps"
     themed.mkdir(parents=True, exist_ok=True)
-    for old in list(ICON_DIR.glob("cc-cockpit-*.png")) + list(themed.glob("cc-cockpit-*.png")):
+    for old in list(ICON_DIR.glob("codex-cockpit-*.png")) + list(themed.glob("codex-cockpit-*.png")):
         old.unlink(missing_ok=True)
 
-    name = f"cc-cockpit-{seq % 1000}"
+    name = f"codex-cockpit-{seq % 1000}"
     surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, SIZE, SIZE)
     ctx = cairo.Context(surf)
     cx = cy = SIZE / 2
