@@ -138,8 +138,9 @@ class Tray:
         for child in self.menu.get_children():
             self.menu.remove(child)
 
-        heading = Gtk.MenuItem(label=APP_ID)
-        heading.get_child().set_markup(f"<b>{APP_ID}</b>")
+        heading = Gtk.MenuItem(label="codex·cockpit")
+        heading.get_child().set_markup(
+            '<b>codex<span foreground="#388cfa">·</span>cockpit</b>')
         self.menu.append(heading)
         self._sep()
 
