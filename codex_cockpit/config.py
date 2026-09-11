@@ -9,7 +9,7 @@ CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / 
 CONFIG_FILE = CONFIG_DIR / "config.json"
 
 DEFAULTS: dict = {
-    # interface language: auto (follows the OS) | en | pt | es
+    # interface language: auto (follows the OS) | en | pt_BR (aliases: pt, pt-BR) | es
     "language": "auto",
     "model_prices": {},  # exact model ID -> input/output/cached_input USD per million
     # Codex rate-limit window

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=codex-cockpit
+Comment=Codex usage in the tray
+Comment[pt_BR]=Consumo do Codex na bandeja
+Exec=codex-cockpit tray
+Icon=utilities-system-monitor
+Terminal=false
+Categories=Development;System;Monitor;

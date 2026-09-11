@@ -1,0 +1,34 @@
+# Maintainer: Claudio Pereira <cpereiraweb@gmail.com>
+# Adapted from Wallace Martins' cc-cockpit PKGBUILD (MIT).
+pkgname=codex-cockpit-git
+pkgver=0.1.0.r0
+pkgrel=1
+pkgdesc="Local Codex usage monitor: tray, dashboard and terminal reports"
+arch=('any')
+url="https://github.com/cpereiraweb/codex-cockpit"
+license=('MIT')
+depends=('python>=3.10' 'python-gobject' 'python-cairo' 'libayatana-appindicator')
+makedepends=('git' 'python-build' 'python-installer' 'python-setuptools' 'python-wheel')
+provides=('codex-cockpit')
+conflicts=('codex-cockpit')
+source=("codex-cockpit::git+$url.git#branch=main")
+sha256sums=('SKIP') # VCS source: resolved by Git, not a fabricated release checksum.
+
+pkgver() {
+  cd "$srcdir/codex-cockpit"
+  printf '%s.r%s.%s' "$(python -c 'from codex_cockpit import __version__; print(__version__)')" \
+    "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+build() {
+  cd "$srcdir/codex-cockpit"
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd "$srcdir/codex-cockpit"
+  python -m installer --destdir="$pkgdir" dist/*.whl
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm644 packaging/codex-cockpit.desktop "$pkgdir/usr/share/applications/codex-cockpit.desktop"
+}

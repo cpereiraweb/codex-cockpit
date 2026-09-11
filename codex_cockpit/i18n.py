@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import os
 
-SUPPORTED = ("en", "pt", "es")
+SUPPORTED = ("en", "pt", "pt_BR", "pt-BR", "en_US", "en-US", "es", "auto")
 DEFAULT = "en"
 
 # region kept when the OS provides one, so numbers format the local way
@@ -16,6 +16,11 @@ _TAGS = {"en": "en-US", "pt": "pt-BR", "es": "es-ES"}
 
 CATALOG: dict[str, dict[str, str]] = {
     "en": {
+        "token_input": "input",
+        "token_output": "output",
+        "token_read": "cache read",
+        "token_write": "cache write",
+
         "unpriced": "Partial USD totals: no price for {models}",
         "status_unknown": "activity unavailable",
         # tray + cli
@@ -92,6 +97,11 @@ CATALOG: dict[str, dict[str, str]] = {
         "src_peak": "your historical peak",
     },
     "pt": {
+        "token_input": "entrada",
+        "token_output": "saída",
+        "token_read": "leitura de cache",
+        "token_write": "escrita de cache",
+
         "unpriced": "Totais em USD parciais: sem preço para {models}",
         "status_unknown": "atividade indisponível",
         "block_of": "Bloco de {h}h",
@@ -103,15 +113,15 @@ CATALOG: dict[str, dict[str, str]] = {
         "days7": "Últimos 7 dias",
         "today": "Hoje",
         "month": "No mês",
-        "cache_hit_7d": "cache hit {p}% nos últimos 7 dias",
-        "tokens_requests": "{tok} tokens · {n} requests",
+        "cache_hit_7d": "acertos de cache {p}% nos últimos 7 dias",
+        "tokens_requests": "{tok} tokens · {n} requisições",
         "no_sessions": "Nenhuma sessão aberta",
         "sessions_open": "{n} sessão(ões) aberta(s)",
         "projects_today": "Projetos de hoje",
         "working": "trabalhando",
         "idle_for": "ociosa há {d}",
         "open_for": "aberta há {d}",
-        "requests_tokens": "{n} requests · {tok} tokens",
+        "requests_tokens": "{n} requisições · {tok} tokens",
         "pid_line": "pid {pid} · {mb} MB · v{version}",
         "open_dashboard": "Abrir dashboard",
         "refresh_now": "Atualizar agora",
@@ -122,18 +132,18 @@ CATALOG: dict[str, dict[str, str]] = {
         "cli_projects": "projetos · histórico",
         "cli_models": "modelos",
         "cli_requests_short": "req",
-        "cli_footer": "histórico local: {n} requests · {tok} tokens · {usd} equivalente API",
+        "cli_footer": "histórico local: {n} requisições · {tok} tokens · {usd} equivalente API",
         "cli_new_events": "{new} evento(s) novo(s) · {total} no histórico",
         "month_equivalent": "equivalente API no mês",
         "plan_roi": "plano {name} · rendeu {roi}× este mês",
         "updated": "atualizado {time}",
         "reference_ceiling": "teto de referência {v}",
-        "requests": "requests",
+        "requests": "requisições",
         "sessions": "sessões",
         "kpi_pace": "ritmo no bloco atual",
         "kpi_projection": "projeção até o fim do bloco",
         "kpi_eta": "até o teto de referência",
-        "kpi_cache": "cache hit em 7 dias",
+        "kpi_cache": "acertos de cache em 7 dias",
         "card_daily": "Consumo por dia · equivalente API",
         "card_hourly": "Últimas 24 horas",
         "card_sessions": "Sessões abertas agora",
@@ -141,14 +151,14 @@ CATALOG: dict[str, dict[str, str]] = {
         "card_blocks": "Blocos de {h}h recentes",
         "card_models": "Modelos",
         "card_tokenmix": "Composição de tokens · 7 dias",
-        "card_effort": "Effort e subagentes",
+        "card_effort": "Esforço e subagentes",
         "th_project": "projeto",
         "th_tokens": "tokens",
         "th_model": "modelo",
         "th_req": "req",
         "no_data": "sem dados",
-        "subagents": "subagentes: {usd} em {n} requests",
-        "footer": "histórico local: {n} requests · {tok} tokens · {usd} equivalente API",
+        "subagents": "subagentes: {usd} em {n} requisições",
+        "footer": "histórico local: {n} requisições · {tok} tokens · {usd} equivalente API",
         "src_official": "do painel oficial",
         "week_window": "Janela semanal",
         "sync_cleared": "âncoras e amostras de calibração apagadas",
@@ -165,6 +175,11 @@ CATALOG: dict[str, dict[str, str]] = {
         "src_peak": "seu pico histórico",
     },
     "es": {
+        "token_input": "entrada",
+        "token_output": "salida",
+        "token_read": "lectura de caché",
+        "token_write": "escritura de caché",
+
         "unpriced": "Totales USD parciales: sin precio para {models}",
         "status_unknown": "actividad no disponible",
         "block_of": "Bloque de {h}h",
@@ -243,29 +258,35 @@ _lang = DEFAULT
 _tag = _TAGS[DEFAULT]
 
 
-def detect() -> tuple[str, str]:
-    """Reads the OS locale. Returns (language, BCP-47 tag)."""
-    raw = ""
-    for var in ("LANGUAGE", "LC_ALL", "LC_MESSAGES", "LANG"):
-        value = os.environ.get(var, "")
-        if value and value not in ("C", "POSIX"):
-            raw = value.split(":")[0]
-            break
-    code = raw.split(".")[0].replace("_", "-")
+def _locale(value: str) -> tuple[str, str] | None:
+    code = value.split(".")[0].split("@")[0].replace("_", "-")
     lang = code.split("-")[0].lower()
-    if lang not in SUPPORTED:
-        return DEFAULT, _TAGS[DEFAULT]
-    tag = code if "-" in code else _TAGS[lang]
+    if lang not in CATALOG:
+        return None
+    # Portuguese strings and formatting are Brazilian Portuguese.
+    tag = "pt-BR" if lang == "pt" else (code if "-" in code else _TAGS[lang])
     return lang, tag
 
 
+def detect() -> tuple[str, str]:
+    """Follow desktop language preferences; ignore generic C/POSIX locales.
+
+    LANGUAGE is an ordered preference list. Generic or unsupported entries must
+    not hide a supported LANG (common when launched by tooling with LC_ALL=C.UTF-8).
+    """
+    for var in ("LANGUAGE", "LC_ALL", "LC_MESSAGES", "LANG"):
+        for value in os.environ.get(var, "").split(":"):
+            resolved = _locale(value)
+            if resolved:
+                return resolved
+    return DEFAULT, _TAGS[DEFAULT]
+
+
 def use(language: str | None = None) -> str:
-    """Pins the language. 'auto' or None follows the OS."""
+    """Accept en, pt_BR, BCP-47 aliases, and auto without mutating OS locale."""
     global _lang, _tag
-    if language and language != "auto" and language in SUPPORTED:
-        _lang, _tag = language, _TAGS[language]
-    else:
-        _lang, _tag = detect()
+    resolved = _locale(language) if language and language != "auto" else None
+    _lang, _tag = resolved or detect()
     return _lang
 
 

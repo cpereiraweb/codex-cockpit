@@ -7,7 +7,7 @@
 <style>
   :root{
     --bg:#0e1014; --panel:#161a21; --panel2:#1c212a; --line:#252b36;
-    --fg:#e6e9ef; --muted:#8b94a6; --accent:#10a37f; --ok:#4ea87a;
+    --fg:#e6e9ef; --muted:#8b94a6; --accent:#388cfa; --ok:#4ea87a;
     --warn:#d9a441; --crit:#d95757; --blue:#5b8dd9;
     --radius:14px;
   }
@@ -176,10 +176,10 @@ function bars(items, {value, label, height=110, fmt=money, hi=null}){
 }
 function stacked(b){
   const parts = [
-    ['cache write', b.cache_write, 'var(--accent)'],
-    ['cache read', b.cache_read, 'var(--blue)'],
-    ['output', b.output, 'var(--ok)'],
-    ['input', b.input, 'var(--warn)'],
+    [t('token_write'), b.cache_write, 'var(--accent)'],
+    [t('token_read'), b.cache_read, 'var(--blue)'],
+    [t('token_output'), b.output, 'var(--ok)'],
+    [t('token_input'), b.input, 'var(--warn)'],
   ].filter(p=>p[1]>0);
   const tot = parts.reduce((a,p)=>a+p[1],0)||1;
   return `<div style="display:flex;height:26px;border-radius:7px;overflow:hidden;margin-bottom:12px">

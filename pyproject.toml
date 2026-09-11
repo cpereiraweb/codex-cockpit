@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codex-cockpit"
+dynamic = ["version"]
+description = "Local Codex usage monitor: GNOME tray, dashboard and terminal reports"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+  {name = "Claudio Pereira"},
+  {name = "Wallace Martins da Silva (original cc-cockpit)"},
+  {name = "Codex (OpenAI), GPT-6 Astra (AI coauthor)"},
+]
+keywords = ["codex", "usage", "gnome", "appindicator", "dashboard"]
+classifiers = ["Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3", "Topic :: Utilities"]
+# GTK is installed by the distribution, not needed for CLI/dashboard.
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/cpereiraweb/codex-cockpit"
+Issues = "https://github.com/cpereiraweb/codex-cockpit/issues"
+Upstream = "https://github.com/wallacemartinss/cc-cockpit"
+
+[project.scripts]
+codex-cockpit = "codex_cockpit.cli:main"
+
+[tool.setuptools]
+include-package-data = false
+packages = ["codex_cockpit"]
+
+[tool.setuptools.dynamic]
+version = {attr = "codex_cockpit.__version__"}
+
+[tool.setuptools.package-data]
+codex_cockpit = ["web/*.html"]

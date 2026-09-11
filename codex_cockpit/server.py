@@ -10,15 +10,16 @@ from pathlib import Path
 from . import config
 from .stats import summary
 
-WEB_DIR = Path(__file__).resolve().parent.parent / "web"
+WEB_DIR = Path(__file__).resolve().parent / "web"
 _CACHE: dict = {"at": 0.0, "data": None}
 _LOCK = threading.Lock()
+_CONFIG: dict | None = None
 
 
 def cached_summary(max_age: float = 5.0) -> dict:
     with _LOCK:
         if _CACHE["data"] is None or time.time() - _CACHE["at"] > max_age:
-            _CACHE["data"] = summary(cfg=config.load())
+            _CACHE["data"] = summary(cfg=_CONFIG if _CONFIG is not None else config.load())
             _CACHE["at"] = time.time()
         return _CACHE["data"]
 
@@ -42,7 +43,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/summary":
             self._send(200, json.dumps(cached_summary()).encode(), "application/json")
         elif path == "/api/config":
-            self._send(200, json.dumps(config.load()).encode(), "application/json")
+            self._send(200, json.dumps(_CONFIG if _CONFIG is not None else config.load()).encode(), "application/json")
         elif path in ("/", "/index.html"):
             f = WEB_DIR / "index.html"
             self._send(200, f.read_bytes(), "text/html; charset=utf-8")
@@ -50,8 +51,11 @@ class Handler(BaseHTTPRequestHandler):
             self._send(404, b"not found", "text/plain; charset=utf-8")
 
 
-def serve(port: int | None = None, open_browser: bool = False) -> None:
-    cfg = config.ensure()
+def serve(port: int | None = None, open_browser: bool = False, cfg: dict | None = None) -> None:
+    global _CONFIG
+    cfg = cfg if cfg is not None else config.ensure()
+    _CONFIG = cfg
+    _CACHE.update(at=0.0, data=None)
     port = port or int(cfg.get("dashboard_port") or 8766)
     httpd = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     url = f"http://127.0.0.1:{port}/"

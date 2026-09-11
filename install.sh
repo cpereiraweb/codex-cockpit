@@ -39,6 +39,7 @@ cat > "$AUTOSTART/codex-cockpit.desktop" <<EOF
 Type=Application
 Name=codex-cockpit
 Comment=Codex usage in the tray
+Comment[pt_BR]=Consumo do Codex na bandeja
 Exec="$BIN/codex-cockpit" tray
 Icon=utilities-system-monitor
 Terminal=false

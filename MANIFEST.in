@@ -1,0 +1,3 @@
+include install.sh
+recursive-include packaging *.sh *.md PKGBUILD .SRCINFO *.desktop
+recursive-include tests *.py

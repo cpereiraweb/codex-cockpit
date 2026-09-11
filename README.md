@@ -3,7 +3,9 @@
 [Repositório oficial: cpereiraweb/codex-cockpit](https://github.com/cpereiraweb/codex-cockpit)
 
 Monitor local de uso do **OpenAI Codex** para Linux: indicador na bandeja GNOME,
-dashboard e relatório no terminal. Interface em português, inglês e espanhol.
+dashboard e relatório no terminal. Detecção automática de idioma, com mensagens
+em inglês (`en`) e português do Brasil (`pt_BR`); espanhol também permanece disponível.
+O ícone azul sem moldura mantém o anel de consumo e o menu identifica `codex-cockpit`.
 
 Lê os rollouts em `$CODEX_HOME/sessions/**/*.jsonl` e
 `$CODEX_HOME/archived_sessions/**/*.jsonl` (`CODEX_HOME` padrão: `~/.codex`).
@@ -58,6 +60,31 @@ Sem instalar:
 python3 -m codex_cockpit report
 python3 -m codex_cockpit serve --open
 ```
+
+## Idioma
+
+O padrão `language: "auto"` considera `LANGUAGE` (lista de preferências),
+`LC_ALL`, `LC_MESSAGES` e `LANG`, ignorando locales genéricos como `C.UTF-8` e
+idiomas sem tradução. Assim, `LANG=pt_BR.UTF-8` funciona mesmo quando um lançador
+injeta `LC_ALL=C.UTF-8`. Sem preferência compatível, usa inglês.
+
+```bash
+codex-cockpit --lang pt_BR tray
+codex-cockpit --lang en serve --open
+```
+
+A opção também pode ser salva como `"language": "pt_BR"` ou `"language": "en"`
+no arquivo de configuração. `pt` e `pt-BR` são aliases aceitos. Reinicie a
+bandeja após mudar a configuração. Dashboard, bandeja e relatórios compartilham
+as mesmas traduções.
+
+## Pacotes e automação
+
+O projeto inclui wheel/sdist, builder `.deb`, receita Arch `codex-cockpit-git`
+e workflows GitHub Actions adaptados do cc-cockpit. A CI testa Python 3.10/3.13
+e verifica o dashboard dentro do wheel instalado. Tags `vX.Y.Z` publicam os
+artefatos no GitHub Releases; PyPI exige configuração explícita de Trusted
+Publishing. Veja [packaging/README.md](packaging/README.md) para build e instalação.
 
 ## O que mostra
 

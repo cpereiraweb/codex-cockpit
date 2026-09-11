@@ -61,8 +61,8 @@ def _bar(pct: float | None, width: int, style: str, state: str = "ok") -> str:
 
 
 class Tray:
-    def __init__(self) -> None:
-        self.cfg = config.ensure()
+    def __init__(self, cfg: dict | None = None) -> None:
+        self.cfg = cfg if cfg is not None else config.ensure()
         use_language(self.cfg.get("language"))
         self.seq = 0
         self.data: dict | None = None
@@ -79,7 +79,7 @@ class Tray:
         self.ind.set_label("codex", APP_ID)
 
         port = int(self.cfg.get("dashboard_port") or 8766)
-        threading.Thread(target=server.serve, args=(port,), daemon=True).start()
+        threading.Thread(target=server.serve, args=(port,), kwargs={"cfg": self.cfg}, daemon=True).start()
         self.url = f"http://127.0.0.1:{port}/"
 
         self.refresh()
@@ -256,6 +256,6 @@ class Tray:
         self.menu.append(item)
 
 
-def main() -> None:
-    Tray()
+def main(cfg: dict | None = None) -> None:
+    Tray(cfg)
     Gtk.main()

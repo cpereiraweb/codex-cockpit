@@ -1,0 +1,22 @@
+pkgbase = codex-cockpit-git
+	pkgdesc = Local Codex usage monitor: tray, dashboard and terminal reports
+	pkgver = 0.1.0.r0
+	pkgrel = 1
+	url = https://github.com/cpereiraweb/codex-cockpit
+	arch = any
+	license = MIT
+	makedepends = git
+	makedepends = python-build
+	makedepends = python-installer
+	makedepends = python-setuptools
+	makedepends = python-wheel
+	depends = python>=3.10
+	depends = python-gobject
+	depends = python-cairo
+	depends = libayatana-appindicator
+	provides = codex-cockpit
+	conflicts = codex-cockpit
+	source = codex-cockpit::git+https://github.com/cpereiraweb/codex-cockpit.git#branch=main
+	sha256sums = SKIP
+
+pkgname = codex-cockpit-git

@@ -140,6 +140,8 @@ def _sync_state(s: dict) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="codex-cockpit", description="Codex usage panel")
+    from . import __version__
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("--lang", choices=i18n.SUPPORTED, help="override the interface language")
     sub = parser.add_subparsers(dest="cmd")
     sub.add_parser("tray", help="tray indicator for GNOME (default)")
@@ -167,9 +169,9 @@ def main(argv: list[str] | None = None) -> int:
     cmd = args.cmd or "tray"
     if cmd == "tray":
         from .tray import main as tray_main
-        tray_main()
+        tray_main(cfg)
     elif cmd == "serve":
-        server.serve(args.port, open_browser=args.open)
+        server.serve(args.port, open_browser=args.open, cfg=cfg)
     elif cmd == "report":
         report(cfg)
     elif cmd == "json":
